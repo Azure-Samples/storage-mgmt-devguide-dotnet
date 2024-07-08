@@ -23,31 +23,30 @@ SubscriptionResource subscription = armClient.GetSubscriptionResource(resourceId
 ResourceProviderResource resourceProvider = await subscription.GetResourceProviderAsync("Microsoft.Storage");
 resourceProvider.Register();
 
-// Create a new resource group (if one already exists then it gets updated)
+// Create a new resource group - if one already exists then it's updated
 ArmOperation<ResourceGroupResource> rgOperation = await subscription.GetResourceGroups().CreateOrUpdateAsync(WaitUntil.Completed, rgName, new ResourceGroupData(location));
 ResourceGroupResource resourceGroup = rgOperation.Value;
 Console.WriteLine($"Resource group: {resourceGroup.Id.Name}");
 
-ManagementTasks.CreateStorageAccount(storageAccountName, storageAccountName, storageAccountName,)
+// Check if the account name is available
+bool? nameAvailable = subscription.CheckStorageAccountNameAvailability(new StorageAccountNameAvailabilityContent(storageAccountName)).Value.IsNameAvailable;
+
+StorageAccountResource storageAccount = await ManagementTasks.CreateStorageAccount(resourceGroup, storageAccountName);
 
 // Get all the storage accounts for a given subscription
-await GetStorageAccountsForSubscription(subscription);
+await ManagementTasks.ListStorageAccountsForSubscription(subscription);
 
 // Get a list of storage accounts within a specific resource group
-await GetStorageAccountsInResourceGroup(resourceGroup);
+await ManagementTasks.ListStorageAccountsInResourceGroup(resourceGroup);
 
-// Get the storage account keys for a given account and resource group
-Pageable<StorageAccountKey> acctKeys = storageAccount.GetKeys();
+// List the storage account keys for a given account
+await ManagementTasks.ListStorageAccountKeys(storageAccount);
 
 // Regenerate an account key for a given account
-StorageAccountRegenerateKeyContent regenKeyContent = new StorageAccountRegenerateKeyContent("key1");
-Pageable<StorageAccountKey> regenAcctKeys = storageAccount.RegenerateKey(regenKeyContent);
+await ManagementTasks.RegenerateStorageAccountKey(storageAccount);
 
 //Update the storage account for a given account name and resource group
 await UpdateStorageAccountSkuAsync(storageAccount, accountCollection);
-
-// Check if the account name is available
-bool? nameAvailable = subscription.CheckStorageAccountNameAvailability(new StorageAccountNameAvailabilityContent(storAccountName)).Value.IsNameAvailable;
 
 // Delete a storage account with the given account name and a resource group
 storageAccount = await accountCollection.GetAsync(storAccountName);

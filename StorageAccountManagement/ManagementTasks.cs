@@ -29,41 +29,63 @@ namespace StorageAccountManagement
             AzureLocation location = AzureLocation.WestUS;
             StorageSku sku = new StorageSku(StorageSkuName.StandardGrs);
             StorageKind kind = StorageKind.StorageV2;
-            bool allowSharedKeyAccess = false;
 
-            StorageAccountCreateOrUpdateContent parameters = new StorageAccountCreateOrUpdateContent(sku, kind, location);
+            StorageAccountCreateOrUpdateContent parameters = new StorageAccountCreateOrUpdateContent(sku, kind, location)
+            {
+                AccessTier = StorageAccountAccessTier.Hot,
+                AllowSharedKeyAccess = false,
+            };
 
             return parameters;
         }
 
-        public static async Task GetStorageAccountsInResourceGroup(ResourceGroupResource resourceGroup)
+        public static async Task ListStorageAccountsInResourceGroup(ResourceGroupResource resourceGroup)
         {
-            Console.WriteLine($"List of storage accounts in {resourceGroup.Id.Name}:");
-            await foreach (StorageAccountResource storAcct in resourceGroup.GetStorageAccounts())
+            await foreach (StorageAccountResource storageAcct in resourceGroup.GetStorageAccounts())
             {
-                Console.WriteLine($"\t{storAcct.Id.Name}");
+                Console.WriteLine($"\t{storageAcct.Id.Name}");
             }
         }
 
-        public static async Task GetStorageAccountsForSubscription(SubscriptionResource subscription)
+        public static async Task ListStorageAccountsForSubscription(SubscriptionResource subscription)
         {
-            AsyncPageable<StorageAccountResource> storAcctsSub = subscription.GetStorageAccountsAsync();
+            AsyncPageable<StorageAccountResource> storageAcctsSub = subscription.GetStorageAccountsAsync();
             Console.WriteLine($"List of storage accounts in subscription {subscription.Get().Value.Data.DisplayName}:");
-            await foreach (StorageAccountResource storAcctSub in storAcctsSub)
+            await foreach (StorageAccountResource storageAcctSub in storageAcctsSub)
             {
-                Console.WriteLine($"\t{storAcctSub.Id.Name}");
+                Console.WriteLine($"\t{storageAcctSub.Id.Name}");
             }
+        }
+
+        public static async Task ListStorageAccountKeys(StorageAccountResource storageAccount)
+           {
+            Pageable<StorageAccountKey> acctKeys = storageAccount.GetKeys();
+            foreach (StorageAccountKey key in acctKeys)
+            {
+                Console.WriteLine($"\tKey name: {key.KeyName}");
+                Console.WriteLine($"\tKey value: {key.Value}");
+            }
+        }
+
+        public static async Task RegenerateStorageAccountKey(StorageAccountResource storageAccount)
+        {
+            StorageAccountRegenerateKeyContent regenKeyContent = new StorageAccountRegenerateKeyContent("key1");
+            Pageable<StorageAccountKey> regenAcctKeys = storageAccount.RegenerateKey(regenKeyContent);
         }
 
         public static async Task UpdateStorageAccountSkuAsync(StorageAccountResource storageAccount, StorageAccountCollection accountCollection)
         {
-            Console.WriteLine("Updating storage account...");
             // Update storage account sku
             var currentSku = storageAccount.Get().Value.Data.Sku.Name;  // capture the current Sku value before updating
             StorageSku updateSku = new StorageSku(StorageSkuName.StandardLrs);
             StorageAccountCreateOrUpdateContent updateParams = new StorageAccountCreateOrUpdateContent(updateSku, kind, location);
             await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storAccountName, updateParams);
             Console.WriteLine($"Sku on storage account updated from {currentSku} to {storageAccount.Get().Value.Data.Sku.Name}");
+        }
+
+        public static async Task DeleteStorageAccountAsync(StorageAccountResource storageAccount)
+        {
+            await storageAccount.DeleteAsync(WaitUntil.Completed);
         }
     }
 }
