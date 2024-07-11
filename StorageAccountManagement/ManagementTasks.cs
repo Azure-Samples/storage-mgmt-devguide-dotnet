@@ -9,6 +9,16 @@ namespace StorageAccountManagement
 {
     public static class ManagementTasks
     {
+        public static async Task RegisterSRPInSubscription(SubscriptionResource subscription)
+        {
+            ResourceProviderResource resourceProvider =
+                await subscription.GetResourceProviderAsync("Microsoft.Storage");
+
+            // Check the registration state of the resource provider and register, if needed
+            if (resourceProvider.Data.RegistrationState == "NotRegistered")
+                resourceProvider.Register();
+        }
+
         public static async Task<StorageAccountResource> CreateStorageAccount(
             ResourceGroupResource resourceGroup,
             string storageAccountName)
@@ -18,7 +28,8 @@ namespace StorageAccountManagement
 
             // Create a storage account with defined account name and settings
             StorageAccountCollection accountCollection = resourceGroup.GetStorageAccounts();
-            ArmOperation<StorageAccountResource> acccountCreateOperation = await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, parameters);
+            ArmOperation<StorageAccountResource> acccountCreateOperation = 
+                await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, parameters);
             StorageAccountResource storageAccount = acccountCreateOperation.Value;
 
             return storageAccount;
@@ -26,13 +37,13 @@ namespace StorageAccountManagement
 
         public static StorageAccountCreateOrUpdateContent GetStorageAccountParameters()
         {
-            AzureLocation location = AzureLocation.WestUS;
-            StorageSku sku = new StorageSku(StorageSkuName.StandardGrs);
+            AzureLocation location = AzureLocation.EastUS;
+            StorageSku sku = new(StorageSkuName.StandardLrs);
             StorageKind kind = StorageKind.StorageV2;
 
-            StorageAccountCreateOrUpdateContent parameters = new StorageAccountCreateOrUpdateContent(sku, kind, location)
+            StorageAccountCreateOrUpdateContent parameters = new(sku, kind, location)
             {
-                AccessTier = StorageAccountAccessTier.Hot,
+                AccessTier = StorageAccountAccessTier.Cool,
                 AllowSharedKeyAccess = false,
             };
 
@@ -49,18 +60,16 @@ namespace StorageAccountManagement
 
         public static async Task ListStorageAccountsForSubscription(SubscriptionResource subscription)
         {
-            AsyncPageable<StorageAccountResource> storageAcctsSub = subscription.GetStorageAccountsAsync();
-            Console.WriteLine($"List of storage accounts in subscription {subscription.Get().Value.Data.DisplayName}:");
-            await foreach (StorageAccountResource storageAcctSub in storageAcctsSub)
+            await foreach (StorageAccountResource storageAcctSub in subscription.GetStorageAccountsAsync())
             {
                 Console.WriteLine($"\t{storageAcctSub.Id.Name}");
             }
         }
 
-        public static async Task ListStorageAccountKeys(StorageAccountResource storageAccount)
+        public static async Task ListStorageAccountKeysAsync(StorageAccountResource storageAccount)
            {
-            Pageable<StorageAccountKey> acctKeys = storageAccount.GetKeys();
-            foreach (StorageAccountKey key in acctKeys)
+            AsyncPageable<StorageAccountKey> acctKeys = storageAccount.GetKeysAsync();
+            await foreach (StorageAccountKey key in acctKeys)
             {
                 Console.WriteLine($"\tKey name: {key.KeyName}");
                 Console.WriteLine($"\tKey value: {key.Value}");
@@ -69,18 +78,27 @@ namespace StorageAccountManagement
 
         public static async Task RegenerateStorageAccountKey(StorageAccountResource storageAccount)
         {
-            StorageAccountRegenerateKeyContent regenKeyContent = new StorageAccountRegenerateKeyContent("key1");
-            Pageable<StorageAccountKey> regenAcctKeys = storageAccount.RegenerateKey(regenKeyContent);
+            StorageAccountRegenerateKeyContent regenKeyContent = new("key1");
+            AsyncPageable<StorageAccountKey> regenAcctKeys = storageAccount.RegenerateKeyAsync(regenKeyContent);
+            await foreach (StorageAccountKey key in regenAcctKeys)
+            {
+                Console.WriteLine($"\tKey name: {key.KeyName}");
+                Console.WriteLine($"\tKey value: {key.Value}");
+            }
         }
 
-        public static async Task UpdateStorageAccountSkuAsync(StorageAccountResource storageAccount, StorageAccountCollection accountCollection)
+        public static async Task UpdateStorageAccountSkuAsync(
+            StorageAccountResource storageAccount,
+            StorageAccountCollection accountCollection)
         {
-            // Update storage account sku
-            var currentSku = storageAccount.Get().Value.Data.Sku.Name;  // capture the current Sku value before updating
-            StorageSku updateSku = new StorageSku(StorageSkuName.StandardLrs);
-            StorageAccountCreateOrUpdateContent updateParams = new StorageAccountCreateOrUpdateContent(updateSku, kind, location);
-            await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storAccountName, updateParams);
-            Console.WriteLine($"Sku on storage account updated from {currentSku} to {storageAccount.Get().Value.Data.Sku.Name}");
+            // Update storage account SKU
+            var currentSku = storageAccount.Data.Sku.Name;  // capture the current Sku value before updating
+            var kind = storageAccount.Data.Kind ?? StorageKind.StorageV2;
+            var location = storageAccount.Data.Location;
+            StorageSku updatedSku = new(StorageSkuName.StandardGrs);
+            StorageAccountCreateOrUpdateContent updatedParams = new(updatedSku, kind, location);
+            await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccount.Data.Name, updatedParams);
+            Console.WriteLine($"SKU on storage account updated from {currentSku} to {storageAccount.Get().Value.Data.Sku.Name}");
         }
 
         public static async Task DeleteStorageAccountAsync(StorageAccountResource storageAccount)
