@@ -13,8 +13,20 @@ const string rgName = "<resource-group-name>";
 string storageAccountName = "<storage-account-name>";
 AzureLocation location = AzureLocation.EastUS;
 
+// Provide configuration options for the ArmClient
+ArmClientOptions armClientOptions = new()
+{
+    Retry = {
+        Delay = TimeSpan.FromSeconds(2),
+        MaxRetries = 5,
+        Mode = RetryMode.Exponential,
+        MaxDelay = TimeSpan.FromSeconds(10),
+        NetworkTimeout = TimeSpan.FromSeconds(100)
+    },
+};
+
 // Authenticate to Azure and create the top-level ArmClient
-ArmClient armClient = new(new DefaultAzureCredential());
+ArmClient armClient = new(new DefaultAzureCredential(), subscriptionId, armClientOptions);
 
 // Create a resource identifier and get the subscription resource
 ResourceIdentifier resourceIdentifier = new($"/subscriptions/{subscriptionId}");
@@ -51,8 +63,11 @@ await ManagementTasks.ListStorageAccountKeysAsync(storageAccount);
 // Regenerate an account key for a given account
 await ManagementTasks.RegenerateStorageAccountKey(storageAccount);
 
-//Update the storage account for a given account name and resource group
+// Update the storage account for a given account name and resource group
 await ManagementTasks.UpdateStorageAccountSkuAsync(storageAccount, resourceGroup.GetStorageAccounts());
+
+// Trigger a failover for a storage account
+await ManagementTasks.FailoverStorageAccountAsync(storageAccount);
 
 Console.WriteLine("Press Enter to delete the storage account...");
 Console.ReadLine();

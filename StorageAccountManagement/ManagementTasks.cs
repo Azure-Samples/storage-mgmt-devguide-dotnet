@@ -101,6 +101,11 @@ namespace StorageAccountManagement
             Console.WriteLine($"SKU on storage account updated from {currentSku} to {storageAccount.Get().Value.Data.Sku.Name}");
         }
 
+        public static async Task FailoverStorageAccountAsync(StorageAccountResource storageAccount)
+        {
+            await storageAccount.FailoverAsync(WaitUntil.Completed, StorageAccountFailoverType.Planned);
+        }
+
         public static async Task DeleteStorageAccountAsync(StorageAccountResource storageAccount)
         {
             await storageAccount.DeleteAsync(WaitUntil.Completed);
