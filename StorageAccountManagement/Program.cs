@@ -66,9 +66,6 @@ await ManagementTasks.RegenerateStorageAccountKey(storageAccount);
 // Update the storage account for a given account name and resource group
 await ManagementTasks.UpdateStorageAccountSkuAsync(storageAccount, resourceGroup.GetStorageAccounts());
 
-// Trigger a failover for a storage account
-await ManagementTasks.FailoverStorageAccountAsync(storageAccount);
-
 Console.WriteLine("Press Enter to delete the storage account...");
 Console.ReadLine();
 
