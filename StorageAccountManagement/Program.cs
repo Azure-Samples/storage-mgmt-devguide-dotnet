@@ -40,7 +40,6 @@ ArmOperation<ResourceGroupResource> rgOperation = await subscription
     .GetResourceGroups()
     .CreateOrUpdateAsync(WaitUntil.Completed, rgName, new ResourceGroupData(location));
 ResourceGroupResource resourceGroup = rgOperation.Value;
-Console.WriteLine($"Resource group: {resourceGroup.Id.Name}");
 
 // Check if the account name is available
 bool? nameAvailable = subscription
