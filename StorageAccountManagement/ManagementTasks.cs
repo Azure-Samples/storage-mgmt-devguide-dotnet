@@ -1,9 +1,9 @@
-﻿using Azure.ResourceManager.Resources;
+﻿using Azure;
+using Azure.Core;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage.Models;
 using Azure.ResourceManager.Storage;
-using Azure;
-using Azure.ResourceManager;
-using Azure.Core;
 
 namespace StorageAccountManagement
 {
@@ -24,49 +24,43 @@ namespace StorageAccountManagement
             string storageAccountName)
         {
             // Define the settings for the storage account
-            StorageAccountCreateOrUpdateContent parameters = GetStorageAccountParameters();
-
-            // Create a storage account with defined account name and settings
-            StorageAccountCollection accountCollection = resourceGroup.GetStorageAccounts();
-            ArmOperation<StorageAccountResource> acccountCreateOperation = 
-                await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, parameters);
-            StorageAccountResource storageAccount = acccountCreateOperation.Value;
-
-            return storageAccount;
-        }
-
-        public static StorageAccountCreateOrUpdateContent GetStorageAccountParameters()
-        {
             AzureLocation location = AzureLocation.EastUS;
             StorageSku sku = new(StorageSkuName.StandardLrs);
             StorageKind kind = StorageKind.StorageV2;
 
+            // Set other properties as needed
             StorageAccountCreateOrUpdateContent parameters = new(sku, kind, location)
             {
                 AccessTier = StorageAccountAccessTier.Cool,
                 AllowSharedKeyAccess = false,
             };
 
-            return parameters;
+            // Create a storage account with defined account name and settings
+            StorageAccountCollection accountCollection = resourceGroup.GetStorageAccounts();
+            ArmOperation<StorageAccountResource> accountCreateOperation = 
+                await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccountName, parameters);
+            StorageAccountResource storageAccount = accountCreateOperation.Value;
+
+            return storageAccount;
         }
 
         public static async Task ListStorageAccountsInResourceGroup(ResourceGroupResource resourceGroup)
         {
-            await foreach (StorageAccountResource storageAcct in resourceGroup.GetStorageAccounts())
+            await foreach (StorageAccountResource storageAccount in resourceGroup.GetStorageAccounts())
             {
-                Console.WriteLine($"\t{storageAcct.Id.Name}");
+                Console.WriteLine($"\t{storageAccount.Id.Name}");
             }
         }
 
         public static async Task ListStorageAccountsForSubscription(SubscriptionResource subscription)
         {
-            await foreach (StorageAccountResource storageAcctSub in subscription.GetStorageAccountsAsync())
+            await foreach (StorageAccountResource storageAccount in subscription.GetStorageAccountsAsync())
             {
-                Console.WriteLine($"\t{storageAcctSub.Id.Name}");
+                Console.WriteLine($"\t{storageAccount.Id.Name}");
             }
         }
 
-        public static async Task ListStorageAccountKeysAsync(StorageAccountResource storageAccount)
+        public static async Task GetStorageAccountKeysAsync(StorageAccountResource storageAccount)
            {
             AsyncPageable<StorageAccountKey> acctKeys = storageAccount.GetKeysAsync();
             await foreach (StorageAccountKey key in acctKeys)
@@ -92,7 +86,7 @@ namespace StorageAccountManagement
             StorageAccountCollection accountCollection)
         {
             // Update storage account SKU
-            var currentSku = storageAccount.Data.Sku.Name;  // capture the current Sku value before updating
+            var currentSku = storageAccount.Data.Sku.Name;  // capture the current SKU value before updating
             var kind = storageAccount.Data.Kind ?? StorageKind.StorageV2;
             var location = storageAccount.Data.Location;
             StorageSku updatedSku = new(StorageSkuName.StandardGrs);

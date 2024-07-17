@@ -8,6 +8,7 @@ using Azure.ResourceManager.Storage.Models;
 
 using StorageAccountManagement;
 
+// Update placeholders with your own values - store values securely
 const string subscriptionId = "<subscription-id>";
 const string rgName = "<resource-group-name>";
 string storageAccountName = "<storage-account-name>";
@@ -43,9 +44,7 @@ ResourceGroupResource resourceGroup = rgOperation.Value;
 
 // Check if the account name is available
 bool? nameAvailable = subscription
-    .CheckStorageAccountNameAvailability(new StorageAccountNameAvailabilityContent(storageAccountName))
-    .Value
-    .IsNameAvailable;
+    .CheckStorageAccountNameAvailability(new StorageAccountNameAvailabilityContent(storageAccountName)).Value.IsNameAvailable;
 
 StorageAccountResource storageAccount = 
     await ManagementTasks.CreateStorageAccount(resourceGroup, storageAccountName);
@@ -57,7 +56,7 @@ await ManagementTasks.ListStorageAccountsForSubscription(subscription);
 await ManagementTasks.ListStorageAccountsInResourceGroup(subscription.GetResourceGroupAsync(rgName).Result);
 
 // List the storage account keys for a given account
-await ManagementTasks.ListStorageAccountKeysAsync(storageAccount);
+await ManagementTasks.GetStorageAccountKeysAsync(storageAccount);
 
 // Regenerate an account key for a given account
 await ManagementTasks.RegenerateStorageAccountKey(storageAccount);
