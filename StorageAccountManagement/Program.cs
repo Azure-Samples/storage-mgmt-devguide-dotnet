@@ -42,10 +42,6 @@ ArmOperation<ResourceGroupResource> rgOperation = await subscription
     .CreateOrUpdateAsync(WaitUntil.Completed, rgName, new ResourceGroupData(location));
 ResourceGroupResource resourceGroup = rgOperation.Value;
 
-// Check if the account name is available
-bool? nameAvailable = subscription
-    .CheckStorageAccountNameAvailability(new StorageAccountNameAvailabilityContent(storageAccountName)).Value.IsNameAvailable;
-
 StorageAccountResource storageAccount = 
     await ManagementTasks.CreateStorageAccount(resourceGroup, storageAccountName);
 
