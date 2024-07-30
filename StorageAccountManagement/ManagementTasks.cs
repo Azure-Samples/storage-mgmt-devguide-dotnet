@@ -9,6 +9,7 @@ namespace StorageAccountManagement
 {
     public static class ManagementTasks
     {
+        // <Snippet_RegisterSRP>
         public static async Task RegisterSRPInSubscription(SubscriptionResource subscription)
         {
             ResourceProviderResource resourceProvider =
@@ -18,7 +19,9 @@ namespace StorageAccountManagement
             if (resourceProvider.Data.RegistrationState == "NotRegistered")
                 resourceProvider.Register();
         }
+        // </Snippet_RegisterSRP
 
+        // <Snippet_CreateStorageAccount>
         public static async Task<StorageAccountResource> CreateStorageAccount(
             ResourceGroupResource resourceGroup,
             string storageAccountName)
@@ -43,7 +46,9 @@ namespace StorageAccountManagement
 
             return storageAccount;
         }
+        // </Snippet_CreateStorageAccount>
 
+        // <Snippet_ListAccountsResourceGroup>
         public static async Task ListStorageAccountsInResourceGroup(ResourceGroupResource resourceGroup)
         {
             await foreach (StorageAccountResource storageAccount in resourceGroup.GetStorageAccounts())
@@ -51,7 +56,9 @@ namespace StorageAccountManagement
                 Console.WriteLine($"\t{storageAccount.Id.Name}");
             }
         }
+        // </Snippet_ListAccountsResourceGroup>
 
+        // <Snippet_ListAccountsSubscription>
         public static async Task ListStorageAccountsForSubscription(SubscriptionResource subscription)
         {
             await foreach (StorageAccountResource storageAccount in subscription.GetStorageAccountsAsync())
@@ -59,7 +66,9 @@ namespace StorageAccountManagement
                 Console.WriteLine($"\t{storageAccount.Id.Name}");
             }
         }
+        // </Snippet_ListAccountsSubscription>
 
+        // <Snippet_GetAccountKeys>
         public static async Task GetStorageAccountKeysAsync(StorageAccountResource storageAccount)
            {
             AsyncPageable<StorageAccountKey> acctKeys = storageAccount.GetKeysAsync();
@@ -69,7 +78,9 @@ namespace StorageAccountManagement
                 Console.WriteLine($"\tKey value: {key.Value}");
             }
         }
+        // </Snippet_GetAccountKeys>
 
+        // <Snippet_RegenerateAccountKey>
         public static async Task RegenerateStorageAccountKey(StorageAccountResource storageAccount)
         {
             StorageAccountRegenerateKeyContent regenKeyContent = new("key1");
@@ -80,7 +91,9 @@ namespace StorageAccountManagement
                 Console.WriteLine($"\tKey value: {key.Value}");
             }
         }
+        // </Snippet_RegenerateAccountKey>
 
+        // <Snippet_UpdateAccountSKU>
         public static async Task UpdateStorageAccountSkuAsync(
             StorageAccountResource storageAccount,
             StorageAccountCollection accountCollection)
@@ -94,10 +107,13 @@ namespace StorageAccountManagement
             await accountCollection.CreateOrUpdateAsync(WaitUntil.Completed, storageAccount.Data.Name, updatedParams);
             Console.WriteLine($"SKU on storage account updated from {currentSku} to {storageAccount.Get().Value.Data.Sku.Name}");
         }
+        // </Snippet_UpdateAccountSKU>
 
+        // <Snippet_DeleteStorageAccount>
         public static async Task DeleteStorageAccountAsync(StorageAccountResource storageAccount)
         {
             await storageAccount.DeleteAsync(WaitUntil.Completed);
         }
+        // </Snippet_DeleteStorageAccount>
     }
 }
