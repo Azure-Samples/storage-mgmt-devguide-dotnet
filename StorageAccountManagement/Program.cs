@@ -14,6 +14,7 @@ const string rgName = "<resource-group-name>";
 string storageAccountName = "<storage-account-name>";
 AzureLocation location = AzureLocation.EastUS;
 
+// <Snippet_CreateArmClient>
 // Provide configuration options for the ArmClient
 ArmClientOptions armClientOptions = new()
 {
@@ -28,6 +29,7 @@ ArmClientOptions armClientOptions = new()
 
 // Authenticate to Azure and create the top-level ArmClient
 ArmClient armClient = new(new DefaultAzureCredential(), subscriptionId, armClientOptions);
+// </Snippet_CreateArmClient>
 
 // Create a resource identifier and get the subscription resource
 ResourceIdentifier resourceIdentifier = new($"/subscriptions/{subscriptionId}");
