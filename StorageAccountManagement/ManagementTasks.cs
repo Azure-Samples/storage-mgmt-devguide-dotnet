@@ -19,7 +19,7 @@ namespace StorageAccountManagement
             if (resourceProvider.Data.RegistrationState == "NotRegistered")
                 resourceProvider.Register();
         }
-        // </Snippet_RegisterSRP
+        // </Snippet_RegisterSRP>
 
         // <Snippet_CreateStorageAccount>
         public static async Task<StorageAccountResource> CreateStorageAccount(
